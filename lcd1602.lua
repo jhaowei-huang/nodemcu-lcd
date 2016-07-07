@@ -1,7 +1,9 @@
+local moduleName = "lcd1602"
 local M = {}
+_G[moduleName] = M
 
-local OFF = 0x00
-local ON  = 0x08
+M.OFF = 0x00
+M.ON  = 0x08
 
 local id = 0
 local deviceAddress = 0x27
@@ -23,22 +25,22 @@ local write = function(b, mode)
   i2c.stop(id)
 end
 -- backgroundLight on/off
-local backgroundLight = function(onoff)
+function M.backgroundLight(onoff)
   -- bitwiseOR(bitwiseAND(bitwiseLShift(1, 3), 0x08), 0x00) is off
   -- bitwiseOR(bitwiseAND(bitwiseLShift(1, 3), 0x08), 0x00) is on
   control = onoff
   write(0x00, 0)
 end
 
-local clear = function()
+function M.clear()
   write(0x01, 0)
 end
 
-local locate = function(row, col)
+function M.locate(row, col)
   return (col + _offsets[row])
 end
 
-local put = function(...)
+function M.put(...)
   for _, x in ipairs({...}) do
     if type(x) == "number" then
       write(x, 0)
@@ -49,24 +51,27 @@ local put = function(...)
   end
 end
 
-local scrollToRight = function(row, colStart, colEnd, s, interval, timer)
+function M.scrollToRight(row, colStart, colEnd, s, interval, timer, callback)
   local i = colStart
 
   tmr.alarm(timer, interval, tmr.ALARM_AUTO, function()
     local col = i < #s + colStart and colStart or i - #s
-    put(
-      locate(row, col),
+    M.put(
+      M.locate(row, col),
       (i < #s + colStart and s:sub(#s - i + colStart, #s - (i - colEnd)) or " " .. s:sub(1, #s - (i - colEnd)))
     )
     if i == #s + colEnd then
       i = colStart
+      if callback ~= nil then
+        s = callback() or s
+      end
     else
       i = i + 1
     end
   end)
 end
 
-local scrollToLeft = function(row, colStart, colEnd, s, interval, timer)
+function M.scrollToLeft(row, colStart, colEnd, s, interval, timer, callback)
   if colStart < colEnd  or colStart >= colMax or colEnd < 0 then
     colStart, colEnd = colMax - 1, 0
   end
@@ -74,12 +79,16 @@ local scrollToLeft = function(row, colStart, colEnd, s, interval, timer)
   local i = colStart
 
   tmr.alarm(timer, interval, tmr.ALARM_AUTO, function()
-    put(
-      locate(row, i >= colEnd and i or colEnd),
-      (i >= colEnd and s:sub(1, colStart + 1 - i) or s:sub(colEnd + 1 - i, colStart + 1 - i)) .. " "
+    local m = i >= colEnd and s:sub(1, colStart + 1 - i) or s:sub(colEnd + 1 - i, colStart + 1 - i)
+    M.put(
+      M.locate(row, i >= colEnd and i or colEnd), 
+      (#m <= colStart - colEnd and i < colEnd and m .. " " or m)
     )
     if i == -#s + colEnd then
       i = colStart
+      if callback ~= nil then
+        s = callback() or s
+      end
     else
       i = i - 1
     end
@@ -87,8 +96,8 @@ local scrollToLeft = function(row, colStart, colEnd, s, interval, timer)
 end
 
 -- start lcd
-local start = function(deviceAddress, sda, scl)
-  deviceAddress = deviceAddress or 0x27
+function M.start(addr, sda, scl)
+  deviceAddress = addr or 0x27
   sda = sda or 5
   scl = scl or 6
   i2c.setup(0, sda, scl, i2c.SLOW)
@@ -101,22 +110,5 @@ local start = function(deviceAddress, sda, scl)
   write(0x01, 0)
   write(0x02, 0)
 end
-
-local init = function()
-  return {
-    ON = ON,
-    OFF = OFF,
-    deviceAddress = deviceAddress,
-    backgroundLight = backgroundLight,
-    clear = clear,
-    locate = locate,
-    put = put,
-    scrollToRight = scrollToRight,
-    scrollToLeft = scrollToLeft,
-    start = start
-  }
-end
-
-M = init
 
 return M
