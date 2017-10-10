@@ -81,8 +81,7 @@ function M.scrollToLeft(row, colStart, colEnd, s, interval, timer, callback)
   tmr.alarm(timer, interval, tmr.ALARM_AUTO, function()
     local m = i >= colEnd and s:sub(1, colStart + 1 - i) or s:sub(colEnd + 1 - i, colStart + 1 - i)
     M.put(
-      M.locate(row, i >= colEnd and i or colEnd), 
-      (#m <= colStart - colEnd and i < colEnd and m .. " " or m)
+      M.locate(row, i >= colEnd and i or colEnd), m .. " "
     )
     if i == -#s + colEnd then
       i = colStart
