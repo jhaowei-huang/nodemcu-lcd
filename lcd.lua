@@ -1,0 +1,5 @@
+lcd = dofile("lcd1602.lua")
+lcd.start(0x27, 2, 3)
+lcd.clear()
+lcd.scrollToLeft(0, 15, 0, "123456789", 500, 1)
+lcd.scrollToRight(1, 0, 15, "Hello World!!", 500, 2)
