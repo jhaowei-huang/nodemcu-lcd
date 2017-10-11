@@ -6,10 +6,10 @@
 ##範例
 ```lua
 -- 使用lcd1602 module
-lcd = dofile("lcd1602.lua")()
+lcd = dofile("lcd1602.lua")
 -- lcd起始設定，裝置位置0x27，D2為sda，D3為scl
 lcd.start(0x27, 2, 3)
--- 清除lce螢幕
+-- 清除lcd螢幕
 lcd.clear()
 -- 在lcd螢幕第0列第2行開始，印出Hello World!
 lcd.put(lcd.locate(0, 2), "Hello World!")
